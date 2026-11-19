@@ -3,14 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import { products } from "@/data/products";
 import { formatPrice } from "@/lib/format";
+import { useCatalog } from "@/providers/CatalogProvider";
 import { useCart } from "@/providers/CartProvider";
 import type { Product, ProductVariant } from "@/types/commerce";
 
 type DisplayItem = { product: Product; variant?: ProductVariant; variantId?: string; quantity: number };
 
 export default function CartPage() {
+  const products = useCatalog();
   const { items, isReady, updateQuantity, removeItem, clearCart } = useCart();
   const displayItems = items.reduce<DisplayItem[]>((result, item) => {
     const product = products.find((candidate) => candidate.id === item.productId);

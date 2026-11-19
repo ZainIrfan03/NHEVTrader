@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 import { ProductCard } from "@/components/commerce/ProductCard";
-import { products } from "@/data/products";
+import { useCatalog } from "@/providers/CatalogProvider";
 import { useWishlist } from "@/providers/WishlistProvider";
 
 export default function WishlistPage() {
+  const products = useCatalog();
   const { productIds, isReady } = useWishlist();
   const saved = products.filter((product) => productIds.includes(product.id));
   if (!isReady) return <div className="page-shell min-h-[620px] py-16"><div className="h-72 animate-pulse rounded-3xl bg-black/5" /></div>;

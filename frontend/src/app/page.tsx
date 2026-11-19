@@ -3,7 +3,7 @@ import { ArrowRight, BadgeCheck, Headphones, ShieldCheck, Truck } from "lucide-r
 import { ProductCard } from "@/components/commerce/ProductCard";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { Hero } from "@/components/home/Hero";
-import { products } from "@/data/products";
+import { getCatalogProducts } from "@/lib/catalog";
 
 const promises = [
   { icon: BadgeCheck, title: "Carefully selected", text: "Practical products chosen for local EV ownership." },
@@ -12,7 +12,9 @@ const promises = [
   { icon: Headphones, title: "Human guidance", text: "Helpful answers before and after your purchase." },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const products = await getCatalogProducts();
+
   return (
     <>
       <Hero />

@@ -5,22 +5,23 @@ import { ChevronRight, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { ProductGallery } from "@/components/commerce/ProductGallery";
 import { ProductPurchase } from "@/components/commerce/ProductPurchase";
 import { RelatedProducts } from "@/components/commerce/RelatedProducts";
-import { getProduct, getRelatedProducts, products } from "@/data/products";
+import { getCatalogProduct, getCatalogProducts, getRelatedCatalogProducts } from "@/lib/catalog";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getCatalogProducts();
   return products.map((product) => ({ slug: product.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/product/[slug]">): Promise<Metadata> {
-  const product = getProduct((await params).slug);
+  const product = await getCatalogProduct((await params).slug);
   return { title: product?.name ?? "Product" };
 }
 
 export default async function ProductPage({ params }: PageProps<"/product/[slug]">) {
-  const product = getProduct((await params).slug);
+  const product = await getCatalogProduct((await params).slug);
   if (!product) return notFound();
 
-  const relatedProducts = getRelatedProducts(product);
+  const relatedProducts = getRelatedCatalogProducts(product, await getCatalogProducts());
 
   return (
     <div className="page-shell py-8 sm:py-14">

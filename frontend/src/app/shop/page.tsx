@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/commerce/ProductCard";
-import { products } from "@/data/products";
+import { getCatalogProducts } from "@/lib/catalog";
 import type { ProductCategory } from "@/types/commerce";
 
 export const metadata: Metadata = { title: "Shop electric" };
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<{ category?: string; q?: string }> }) {
+  const products = await getCatalogProducts();
   const params = await searchParams;
   const category = params.category as ProductCategory | undefined;
   const query = params.q?.toLowerCase();
