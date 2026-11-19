@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { formatPrice } from "@/lib/format";
+import { useAuth } from "@/providers/AuthProvider";
 import { useCatalog } from "@/providers/CatalogProvider";
 import { useCart } from "@/providers/CartProvider";
 import type { Product, ProductVariant } from "@/types/commerce";
@@ -11,6 +12,7 @@ import type { Product, ProductVariant } from "@/types/commerce";
 type DisplayItem = { product: Product; variant?: ProductVariant; variantId?: string; quantity: number };
 
 export default function CartPage() {
+  const { user } = useAuth();
   const products = useCatalog();
   const { items, isReady, updateQuantity, removeItem, clearCart } = useCart();
   const displayItems = items.reduce<DisplayItem[]>((result, item) => {
@@ -79,7 +81,7 @@ export default function CartPage() {
             <div className="flex justify-between text-black/55"><span>Delivery</span><span>Calculated at checkout</span></div>
           </div>
           <div className="flex justify-between py-5 font-black"><span>Total</span><span>{formatPrice(subtotal)}</span></div>
-          <Link href="/checkout" className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-[#182019] px-5 py-4 text-sm font-black text-white hover:bg-[#466c42]">Proceed to checkout <ArrowRight size={16} /></Link>
+          <Link href={user ? "/checkout" : "/account?returnTo=%2Fcheckout"} className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-[#182019] px-5 py-4 text-sm font-black text-white hover:bg-[#466c42]">{user ? "Proceed to checkout" : "Sign in to checkout"} <ArrowRight size={16} /></Link>
           <p className="mt-4 text-center text-xs text-black/40">COD and online payment available</p>
         </aside>
       </div>

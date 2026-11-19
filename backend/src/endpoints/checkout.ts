@@ -28,6 +28,10 @@ export const checkoutEndpoint: Endpoint = {
   path: '/storefront/checkout',
   method: 'post',
   handler: async (req) => {
+    if (req.user?.collection !== 'customers') {
+      return Response.json({ error: 'Please sign in before checking out.' }, { status: 401 })
+    }
+
     const body = (await req.json?.()) as Partial<CheckoutBody>
 
     if (

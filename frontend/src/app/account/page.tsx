@@ -12,6 +12,14 @@ type FieldErrors = Partial<Record<FieldName, string>>;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const pakistanMobilePattern = /^(?:\+92|92|0)?3\d{9}$/;
 
+function getReturnPath() {
+  if (typeof window === "undefined") return "/account/dashboard";
+  const requested = new URLSearchParams(window.location.search).get("returnTo");
+  return requested?.startsWith("/") && !requested.startsWith("//")
+    ? requested
+    : "/account/dashboard";
+}
+
 export default function AccountPage() {
   const router = useRouter();
   const { user, isLoading, signIn, register } = useAuth();
@@ -62,7 +70,7 @@ export default function AccountPage() {
       setError(result.error || "Authentication failed.");
       return;
     }
-    router.push("/account/dashboard");
+    router.push(getReturnPath());
     router.refresh();
   };
 

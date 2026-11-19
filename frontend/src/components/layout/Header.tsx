@@ -18,6 +18,7 @@ const nav = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
+  const accountHref = user ? "/account/dashboard" : "/account";
   const { itemCount } = useCart();
   const { productIds } = useWishlist();
   return (
@@ -33,8 +34,8 @@ export function Header() {
           </nav>
           <div className="flex items-center gap-1">
             <Link href="/shop" aria-label="Search products" className="focus-ring rounded-full p-2.5 hover:bg-black/5"><Search size={20} /></Link>
-            <Link href={user ? "/account/dashboard" : "/account"} aria-label={user ? `${user.name}'s account` : "Sign in or create an account"} className={`focus-ring hidden rounded-full p-2.5 hover:bg-black/5 sm:block ${user ? "bg-[#c9ef6d]" : ""}`}><User size={20} /></Link>
-            <Link href="/wishlist" aria-label={`Wishlist, ${productIds.length} items`} className="focus-ring relative hidden rounded-full p-2.5 hover:bg-black/5 sm:block"><Heart size={20} />{productIds.length > 0 && <span className="absolute right-0 top-0 grid h-5 min-w-5 place-items-center rounded-full bg-[#c9ef6d] px-1 text-[10px] font-black">{productIds.length}</span>}</Link>
+            <Link key={accountHref} href={accountHref} prefetch={false} aria-label={user ? `${user.name}'s account` : "Sign in or create an account"} className={`focus-ring hidden rounded-full p-2.5 hover:bg-black/5 sm:block ${user ? "bg-[#c9ef6d]" : ""}`}><User size={20} /></Link>
+            <Link href={user ? "/wishlist" : "/account?returnTo=%2Fwishlist"} aria-label={user ? `Wishlist, ${productIds.length} items` : "Sign in to view wishlist"} className="focus-ring relative hidden rounded-full p-2.5 hover:bg-black/5 sm:block"><Heart size={20} />{user && productIds.length > 0 && <span className="absolute right-0 top-0 grid h-5 min-w-5 place-items-center rounded-full bg-[#c9ef6d] px-1 text-[10px] font-black">{productIds.length}</span>}</Link>
             <Link href="/cart" aria-label={`Shopping cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`} className="focus-ring relative rounded-full p-2.5 hover:bg-black/5"><ShoppingBag size={20} />{itemCount > 0 && <span className="absolute right-0 top-0 grid h-5 min-w-5 place-items-center rounded-full bg-[#c9ef6d] px-1 text-[10px] font-black">{itemCount > 99 ? "99+" : itemCount}</span>}</Link>
             <button onClick={() => setOpen(!open)} aria-expanded={open} aria-label="Toggle menu" className="focus-ring rounded-full p-2.5 lg:hidden">{open ? <X size={21} /> : <Menu size={21} />}</button>
           </div>

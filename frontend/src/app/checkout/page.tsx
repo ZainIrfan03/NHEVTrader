@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, CreditCard, LoaderCircle, LockKeyhole, Truck } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { formatPrice } from "@/lib/format";
 import { useAuth } from "@/providers/AuthProvider";
 import { useCatalog } from "@/providers/CatalogProvider";
@@ -21,8 +22,9 @@ type PlacedOrder = {
 type CheckoutResponse = { order?: PlacedOrder; error?: string };
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const products = useCatalog();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const { items, isReady, clearCart } = useCart();
   const [payment, setPayment] = useState<"cod" | "online">("cod");
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +44,10 @@ export default function CheckoutPage() {
   );
   const delivery = subtotal >= 500000 ? 0 : 2500;
   const total = subtotal + delivery;
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/account?returnTo=%2Fcheckout");
+  }, [authLoading, router, user]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -87,7 +93,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!isReady) {
+  if (authLoading || !user || !isReady) {
     return <div className="page-shell min-h-[650px] py-16"><div className="h-96 animate-pulse rounded-3xl bg-black/5" /></div>;
   }
 

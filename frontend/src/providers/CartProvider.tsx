@@ -1,9 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { CartItem } from "@/types/commerce";
+import { useAuth } from "@/providers/AuthProvider";
 
-const STORAGE_KEY = "nh-ev-trader-cart-v1";
+const STORAGE_PREFIX = "nh-ev-trader-cart-v2";
+const LEGACY_STORAGE_KEY = "nh-ev-trader-cart-v1";
 
 type CartContextValue = {
   items: CartItem[];
@@ -25,36 +27,72 @@ function isStoredCart(value: unknown): value is CartItem[] {
   });
 }
 
+function mergeCarts(accountItems: CartItem[], guestItems: CartItem[]) {
+  return guestItems.reduce<CartItem[]>((merged, guestItem) => {
+    const existing = merged.find((item) =>
+      item.productId === guestItem.productId && item.variantId === guestItem.variantId);
+    if (!existing) return [...merged, guestItem];
+    return merged.map((item) => item === existing
+      ? { ...item, quantity: item.quantity + guestItem.quantity }
+      : item);
+  }, accountItems);
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { user, isLoading: authLoading } = useAuth();
+  const storageKey = authLoading ? null : `${STORAGE_PREFIX}:${user?.id || "guest"}`;
   const [items, setItems] = useState<CartItem[]>([]);
-  const [isReady, setIsReady] = useState(false);
-  const hasLoaded = useRef(false);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!storageKey) return;
+
+    let saved: CartItem[] = [];
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const stored = window.localStorage.getItem(storageKey);
       if (stored) {
         const parsed: unknown = JSON.parse(stored);
-        if (isStoredCart(parsed)) setItems(parsed);
+        if (isStoredCart(parsed)) saved = parsed;
+      }
+
+      const legacyStored = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (user && saved.length === 0 && legacyStored) {
+        const legacy: unknown = JSON.parse(legacyStored);
+        if (isStoredCart(legacy)) saved = legacy;
+      }
+
+      if (user) {
+        const guestKey = `${STORAGE_PREFIX}:guest`;
+        const guestStored = window.localStorage.getItem(guestKey);
+        if (guestStored) {
+          const guest: unknown = JSON.parse(guestStored);
+          if (isStoredCart(guest)) saved = mergeCarts(saved, guest);
+          window.localStorage.removeItem(guestKey);
+        }
       }
     } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } finally {
-      hasLoaded.current = true;
-      setIsReady(true);
+      window.localStorage.removeItem(storageKey);
     }
-  }, []);
+
+    window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    setItems(saved);
+    setActiveKey(storageKey);
+  }, [storageKey, user]);
 
   useEffect(() => {
-    if (!hasLoaded.current) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    if (!storageKey || activeKey !== storageKey) return;
+    window.localStorage.setItem(storageKey, JSON.stringify(items));
+  }, [activeKey, items, storageKey]);
+
+  const visibleItems = activeKey === storageKey ? items : [];
+  const isReady = !authLoading && Boolean(storageKey) && activeKey === storageKey;
 
   const value = useMemo<CartContextValue>(() => ({
-    items,
-    itemCount: items.reduce((total, item) => total + item.quantity, 0),
+    items: visibleItems,
+    itemCount: visibleItems.reduce((total, item) => total + item.quantity, 0),
     isReady,
     addItem: (productId, variantId, quantity = 1) => {
+      if (!isReady) return;
       setItems((current) => {
         const existing = current.find((item) => item.productId === productId && item.variantId === variantId);
         if (!existing) return [...current, { productId, variantId, quantity }];
@@ -62,15 +100,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
     },
     updateQuantity: (productId, variantId, quantity) => {
+      if (!isReady) return;
       if (quantity <= 0) {
         setItems((current) => current.filter((item) => !(item.productId === productId && item.variantId === variantId)));
         return;
       }
       setItems((current) => current.map((item) => item.productId === productId && item.variantId === variantId ? { ...item, quantity } : item));
     },
-    removeItem: (productId, variantId) => setItems((current) => current.filter((item) => !(item.productId === productId && item.variantId === variantId))),
-    clearCart: () => setItems([]),
-  }), [isReady, items]);
+    removeItem: (productId, variantId) => {
+      if (!isReady) return;
+      setItems((current) => current.filter((item) => !(item.productId === productId && item.variantId === variantId)));
+    },
+    clearCart: () => {
+      if (isReady) setItems([]);
+    },
+  }), [isReady, visibleItems]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
