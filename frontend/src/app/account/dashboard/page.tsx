@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { Heart, LoaderCircle, LogOut, MapPin, Package, Pencil, Plus, UserRound, X } from "lucide-react";
+import { ChevronDown, Heart, LoaderCircle, LogOut, MapPin, Package, Pencil, Plus, UserRound, X } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { useAuth } from "@/providers/AuthProvider";
 
@@ -88,12 +88,19 @@ export default function DashboardPage() {
   const { user, isLoading, signOut, refresh } = useAuth();
   const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [expandedOrderIds, setExpandedOrderIds] = useState<string[]>([]);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [orderMessage, setOrderMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<{ address: SavedAddress; index: number } | null>(null);
   const [addressSaving, setAddressSaving] = useState(false);
   const [addressMessage, setAddressMessage] = useState<string | null>(null);
+
+  const toggleOrder = (orderId: string) => {
+    setExpandedOrderIds((current) => current.includes(orderId)
+      ? current.filter((id) => id !== orderId)
+      : [...current, orderId]);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -178,12 +185,15 @@ export default function DashboardPage() {
         {orderMessage && <p role="status" className={`mt-5 rounded-xl px-4 py-3 text-sm font-bold ${orderMessage.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{orderMessage.text}</p>}
         {ordersLoading ? <LoaderCircle className="mt-8 animate-spin text-[#466c42]" /> : orders.length ? <div className="mt-6 grid gap-5">{orders.map((order) => {
           const canCancel = ["pending", "confirmed"].includes(order.orderStatus) && order.paymentStatus !== "paid";
-          return <article key={order.id} className="overflow-hidden rounded-2xl border border-black/10">
-            <header className="flex flex-wrap items-center justify-between gap-4 bg-[#f7f6f1] px-5 py-4">
+          const isExpanded = expandedOrderIds.includes(order.id);
+          const detailsId = `order-details-${order.id}`;
+          return <article key={order.id} className={`overflow-hidden rounded-2xl border bg-white transition-all duration-300 ${isExpanded ? "border-[#466c42]/35 shadow-[0_18px_45px_rgba(24,32,25,.08)]" : "border-black/10 hover:-translate-y-0.5 hover:border-[#466c42]/35 hover:shadow-[0_14px_35px_rgba(24,32,25,.09)]"}`}>
+            <button type="button" onClick={() => toggleOrder(order.id)} aria-expanded={isExpanded} aria-controls={detailsId} className="focus-ring group flex w-full flex-wrap items-center justify-between gap-4 bg-[#f7f6f1] px-5 py-4 text-left transition-colors hover:bg-[#eef2e9] sm:px-6">
               <div><p className="text-xs font-bold uppercase tracking-[.12em] text-black/40">Order number</p><p className="mt-1 font-black">{order.orderNumber}</p></div>
-              <div className="text-left sm:text-right"><p className="text-xs text-black/45">Placed {new Date(order.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</p><span className={`mt-1.5 inline-flex rounded-full px-3 py-1 text-xs font-black capitalize ${getOrderStatusStyle(order.orderStatus)}`}>{order.orderStatus}</span></div>
-            </header>
-            <div className="p-5">
+              <div className="ml-auto text-right"><p className="text-xs text-black/45">Placed {new Date(order.createdAt).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</p><p className="mt-1 font-black">{formatPrice(order.grandTotal)}</p></div>
+              <div className="flex min-w-[110px] items-center justify-end gap-3"><span className={`inline-flex rounded-full px-3 py-1 text-xs font-black capitalize ${getOrderStatusStyle(order.orderStatus)}`}>{order.orderStatus}</span><ChevronDown size={20} className={`shrink-0 text-[#466c42] transition-transform duration-300 group-hover:scale-110 ${isExpanded ? "rotate-180" : ""}`} /></div>
+            </button>
+            {isExpanded && <div id={detailsId} className="animate-in fade-in slide-in-from-top-2 p-5 duration-300 sm:p-6">
               <div className="grid gap-4">{(order.items || []).map((item, itemIndex) => {
                 const product = typeof item.product === "string" ? null : item.product;
                 const content = <><div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-[#edf0e8]"><Image src={getOrderItemImage(item.product)} alt={product?.images?.[0]?.alt || item.productName} fill sizes="96px" className="object-cover" /></div><div className="min-w-0 flex-1"><h3 className="font-black text-[#182019]">{item.productName}</h3><p className="mt-1 text-sm text-black/50">{item.variantLabel}</p><p className="mt-1 text-sm text-black/50">Qty: {item.quantity} × {formatPrice(item.unitPrice)}</p></div><p className="font-black">{formatPrice(item.lineTotal)}</p></>;
@@ -194,7 +204,7 @@ export default function DashboardPage() {
                 <div className="grid gap-2 text-sm"><div className="flex justify-between gap-4 text-black/55"><span>Subtotal</span><span>{formatPrice(order.subtotal)}</span></div><div className="flex justify-between gap-4 text-black/55"><span>Delivery</span><span>{order.deliveryFee ? formatPrice(order.deliveryFee) : "Free"}</span></div><div className="flex justify-between gap-4 border-t border-black/10 pt-2 text-base font-black"><span>Total</span><span>{formatPrice(order.grandTotal)}</span></div></div>
               </div>
               {canCancel && <div className="mt-5 flex justify-end border-t border-black/10 pt-5"><button type="button" onClick={() => cancelOrder(order)} disabled={cancellingOrderId === order.id} className="inline-flex items-center gap-2 rounded-full border border-red-200 px-4 py-2.5 text-xs font-black text-red-700 transition hover:bg-red-50 disabled:cursor-wait disabled:opacity-60">{cancellingOrderId === order.id ? <LoaderCircle size={15} className="animate-spin" /> : <X size={15} />} {cancellingOrderId === order.id ? "Cancelling…" : "Cancel order"}</button></div>}
-            </div>
+            </div>}
           </article>;
         })}</div> : <p className="mt-6 text-sm text-black/45">No orders yet. <Link href="/shop" className="font-bold text-black underline">Explore the shop</Link>.</p>}
       </section>
