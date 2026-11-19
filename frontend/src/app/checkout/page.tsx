@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, CreditCard, LoaderCircle, LockKeyhole, Truck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { formatPrice } from "@/lib/format";
+import { useAuth } from "@/providers/AuthProvider";
 import { useCatalog } from "@/providers/CatalogProvider";
 import { useCart } from "@/providers/CartProvider";
 
@@ -21,6 +22,7 @@ type CheckoutResponse = { order?: PlacedOrder; error?: string };
 
 export default function CheckoutPage() {
   const products = useCatalog();
+  const { user } = useAuth();
   const { items, isReady, clearCart } = useCart();
   const [payment, setPayment] = useState<"cod" | "online">("cod");
   const [submitting, setSubmitting] = useState(false);
@@ -115,13 +117,13 @@ export default function CheckoutPage() {
         <div>
           <p className="text-xs font-black uppercase tracking-[.22em] text-[#466c42]">Secure checkout</p>
           <h1 className="display mt-3 text-5xl sm:text-6xl">Delivery details.</h1>
-          <form onSubmit={handleSubmit} className="mt-10 grid gap-8">
+          <form key={user?.id || "guest"} onSubmit={handleSubmit} className="mt-10 grid gap-8">
             <section className="rounded-2xl bg-white p-6 sm:p-8">
               <h2 className="font-black">Contact information</h2>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-2 text-xs font-bold">Full name<input name="customerName" required autoComplete="name" className="rounded-xl border border-black/15 px-4 py-3 text-sm font-normal outline-none focus:border-[#466c42]" placeholder="Your full name" /></label>
-                <label className="grid gap-2 text-xs font-bold">Phone number<input name="customerPhone" required type="tel" autoComplete="tel" className="rounded-xl border border-black/15 px-4 py-3 text-sm font-normal outline-none focus:border-[#466c42]" placeholder="03XX XXXXXXX" /></label>
-                <label className="grid gap-2 text-xs font-bold sm:col-span-2">Email address<input name="customerEmail" required type="email" autoComplete="email" className="rounded-xl border border-black/15 px-4 py-3 text-sm font-normal outline-none focus:border-[#466c42]" placeholder="you@example.com" /></label>
+                <label className="grid gap-2 text-xs font-bold">Full name<input name="customerName" required autoComplete="name" defaultValue={user?.name || ""} className="rounded-xl border border-black/15 px-4 py-3 text-sm font-normal outline-none focus:border-[#466c42]" placeholder="Your full name" /></label>
+                <label className="grid gap-2 text-xs font-bold">Phone number<input name="customerPhone" required type="tel" autoComplete="tel" defaultValue={user?.phone || ""} className="rounded-xl border border-black/15 px-4 py-3 text-sm font-normal outline-none focus:border-[#466c42]" placeholder="03XX XXXXXXX" /></label>
+                <label className="grid gap-2 text-xs font-bold sm:col-span-2">Email address<input name="customerEmail" required type="email" autoComplete="email" defaultValue={user?.email || ""} className="rounded-xl border border-black/15 px-4 py-3 text-sm font-normal outline-none focus:border-[#466c42]" placeholder="you@example.com" /></label>
               </div>
             </section>
 

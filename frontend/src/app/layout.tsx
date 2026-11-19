@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { getCatalogProducts } from "@/lib/catalog";
 import { CatalogProvider } from "@/providers/CatalogProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
 import { CartProvider } from "@/providers/CartProvider";
 import { WishlistProvider } from "@/providers/WishlistProvider";
 import "./globals.css";
@@ -19,13 +20,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="en" data-scroll-behavior="smooth">
       <body>
         <CatalogProvider products={products}>
-          <CartProvider>
-            <WishlistProvider>
-              <Header />
-              <main>{children}</main>
-              <Footer />
-            </WishlistProvider>
-          </CartProvider>
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <Header />
+                <main>{children}</main>
+                <Footer />
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
         </CatalogProvider>
       </body>
     </html>

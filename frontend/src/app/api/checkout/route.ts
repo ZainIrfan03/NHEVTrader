@@ -5,7 +5,11 @@ export async function POST(request: Request) {
     const body: unknown = await request.json();
     const response = await fetch(`${backendAPI}/storefront/checkout`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(request.headers.get("cookie") ? { Cookie: request.headers.get("cookie")! } : {}),
+      },
       body: JSON.stringify(body),
       cache: "no-store",
     });
