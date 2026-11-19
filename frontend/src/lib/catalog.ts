@@ -128,8 +128,8 @@ export const getCatalogProducts = cache(async (): Promise<Product[]> => {
   try {
     const products = await requestProducts();
     if (products.length || process.env.NODE_ENV === "production") return products;
-  } catch (error) {
-    if (process.env.NODE_ENV === "production") throw error;
+  } catch {
+    if (process.env.NODE_ENV === "production") return [];
   }
   return developmentProducts;
 });

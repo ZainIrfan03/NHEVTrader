@@ -75,6 +75,7 @@ export interface Config {
     media: Media;
     orders: Order;
     'inventory-logs': InventoryLog;
+    inquiries: Inquiry;
     banners: Banner;
     pages: Page;
     'payload-kv': PayloadKv;
@@ -91,6 +92,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
     'inventory-logs': InventoryLogsSelect<false> | InventoryLogsSelect<true>;
+    inquiries: InquiriesSelect<false> | InquiriesSelect<true>;
     banners: BannersSelect<false> | BannersSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -383,16 +385,36 @@ export interface InventoryLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inquiries".
+ */
+export interface Inquiry {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  message: string;
+  status: 'new' | 'contacted' | 'closed';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "banners".
  */
 export interface Banner {
   id: string;
   title: string;
+  accentTitle?: string | null;
   eyebrow?: string | null;
   description?: string | null;
   image: string | Media;
   buttonLabel?: string | null;
   buttonURL?: string | null;
+  secondaryButtonLabel?: string | null;
+  secondaryButtonURL?: string | null;
+  metaLabel?: string | null;
+  metaValue?: string | null;
+  imagePosition?: string | null;
   active?: boolean | null;
   sortOrder?: number | null;
   startsAt?: string | null;
@@ -484,6 +506,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'inventory-logs';
         value: string | InventoryLog;
+      } | null)
+    | ({
+        relationTo: 'inquiries';
+        value: string | Inquiry;
       } | null)
     | ({
         relationTo: 'banners';
@@ -753,15 +779,34 @@ export interface InventoryLogsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inquiries_select".
+ */
+export interface InquiriesSelect<T extends boolean = true> {
+  name?: T;
+  phone?: T;
+  email?: T;
+  message?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "banners_select".
  */
 export interface BannersSelect<T extends boolean = true> {
   title?: T;
+  accentTitle?: T;
   eyebrow?: T;
   description?: T;
   image?: T;
   buttonLabel?: T;
   buttonURL?: T;
+  secondaryButtonLabel?: T;
+  secondaryButtonURL?: T;
+  metaLabel?: T;
+  metaValue?: T;
+  imagePosition?: T;
   active?: T;
   sortOrder?: T;
   startsAt?: T;

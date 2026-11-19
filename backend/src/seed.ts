@@ -124,9 +124,74 @@ const productSeeds = [
   },
 ]
 
+const bannerSeeds = [
+  {
+    title: 'Move electric.',
+    accentTitle: 'Live lighter.',
+    eyebrow: 'The drive ahead',
+    description: 'Carefully selected EVs, home charging and everyday essentials—backed by practical guidance from first click to first drive.',
+    image: 'hero-ev.png',
+    buttonLabel: 'Explore the range',
+    buttonURL: '/shop',
+    secondaryButtonLabel: 'Find a charger',
+    secondaryButtonURL: '/shop?category=Chargers',
+    metaLabel: 'Featured',
+    metaValue: 'Nova E5 · Up to 430 km',
+    imagePosition: '64% center',
+    sortOrder: 1,
+  },
+  {
+    title: 'Own the city.',
+    accentTitle: 'Quietly.',
+    eyebrow: 'Made for every mile',
+    description: 'Responsive performance, useful range and refined comfort—discover electric vehicles chosen for the rhythm of modern Pakistan.',
+    image: 'hero-city-drive.png',
+    buttonLabel: 'Shop electric vehicles',
+    buttonURL: '/shop?category=Vehicles',
+    secondaryButtonLabel: 'Explore all products',
+    secondaryButtonURL: '/shop',
+    metaLabel: 'Drive electric',
+    metaValue: 'Smooth power · Zero tailpipe emissions',
+    imagePosition: '62% center',
+    sortOrder: 2,
+  },
+  {
+    title: 'Charge at home.',
+    accentTitle: 'Wake ready.',
+    eyebrow: 'Power, where you park',
+    description: 'Reliable home charging turns every night into a full start. We’ll help you choose a setup that fits your car and routine.',
+    image: 'hero-home-charge.png',
+    buttonLabel: 'Browse home chargers',
+    buttonURL: '/shop?category=Chargers',
+    secondaryButtonLabel: 'Talk to an advisor',
+    secondaryButtonURL: 'mailto:hello@nhevtrader.com',
+    metaLabel: 'Everyday charging',
+    metaValue: 'Safe · Simple · Ready by morning',
+    imagePosition: '64% center',
+    sortOrder: 3,
+  },
+]
+
 async function seed() {
   const payload = await getPayload({ config })
   const categoryIds = new Map<string, string>()
+  const productIds: string[] = []
+
+  const getOrCreateMedia = async (filename: string, alt: string) => {
+    const existing = await payload.find({
+      collection: 'media',
+      where: { filename: { equals: filename } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (existing.docs[0]) return existing.docs[0]
+    return payload.create({
+      collection: 'media',
+      overrideAccess: true,
+      filePath: path.join(imageDirectory, filename),
+      data: { alt },
+    })
+  }
 
   for (const category of categorySeeds) {
     const existing = await payload.find({
@@ -152,16 +217,12 @@ async function seed() {
     })
     if (existing.docs.length) {
       payload.logger.info(`Skipped existing product: ${product.title}`)
+      productIds.push(existing.docs[0].id)
       continue
     }
 
-    const media = await payload.create({
-      collection: 'media',
-      overrideAccess: true,
-      filePath: path.join(imageDirectory, product.image),
-      data: { alt: product.title },
-    })
-    await payload.create({
+    const media = await getOrCreateMedia(product.image, product.title)
+    const createdProduct = await payload.create({
       collection: 'products',
       overrideAccess: true,
       draft: false,
@@ -182,10 +243,59 @@ async function seed() {
         _status: 'published',
       },
     })
+    productIds.push(createdProduct.id)
     payload.logger.info(`Created product: ${product.title}`)
   }
 
-  payload.logger.info('NH EV Trader development catalog is ready.')
+  const bannerIds: string[] = []
+  for (const banner of bannerSeeds) {
+    const existing = await payload.find({
+      collection: 'banners',
+      where: { title: { equals: banner.title } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (existing.docs[0]) {
+      bannerIds.push(existing.docs[0].id)
+      continue
+    }
+    const media = await getOrCreateMedia(banner.image, `${banner.title} ${banner.accentTitle}`)
+    const created = await payload.create({
+      collection: 'banners',
+      overrideAccess: true,
+      data: {
+        ...banner,
+        image: media.id,
+        active: true,
+      },
+    })
+    bannerIds.push(created.id)
+  }
+
+  await payload.updateGlobal({
+    slug: 'homepage',
+    overrideAccess: true,
+    data: {
+      heroBanners: bannerIds,
+      featuredProducts: productIds.slice(0, 3),
+      featuredHeading: 'Featured picks.',
+      featuredDescription: 'Vehicles, charging and essentials selected for practical EV ownership.',
+    },
+  })
+  await payload.updateGlobal({
+    slug: 'site-settings',
+    overrideAccess: true,
+    data: {
+      storeName: 'NH EV Trader',
+      supportPhone: '+92 300 0000000',
+      supportEmail: 'hello@nhevtrader.com',
+      whatsappNumber: '+92 300 0000000',
+      freeDeliveryThreshold: 500000,
+      standardDeliveryFee: 2500,
+    },
+  })
+
+  payload.logger.info('NH EV Trader development catalog and homepage content are ready.')
   process.exit(0)
 }
 

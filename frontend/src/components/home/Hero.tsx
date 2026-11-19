@@ -13,15 +13,16 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import type { HeroSlideContent } from "@/types/content";
 
 const AUTOPLAY_DELAY = 6500;
 
-const slides = [
+const defaultSlides: HeroSlideContent[] = [
   {
+    id: "drive-ahead",
     image: "/images/hero-ev.png",
     alt: "White electric crossover at a modern charging plaza",
     eyebrow: "The drive ahead",
-    icon: Zap,
     title: "Move electric.",
     accent: "Live lighter.",
     description: "Carefully selected EVs, home charging and everyday essentials—backed by practical guidance from first click to first drive.",
@@ -32,10 +33,10 @@ const slides = [
     objectPosition: "64% center",
   },
   {
+    id: "city-mile",
     image: "/images/hero-city-drive.png",
     alt: "Midnight-blue electric sedan driving through Lahore at dusk",
     eyebrow: "Made for every mile",
-    icon: Gauge,
     title: "Own the city.",
     accent: "Quietly.",
     description: "Responsive performance, useful range and refined comfort—discover electric vehicles chosen for the rhythm of modern Pakistan.",
@@ -46,10 +47,10 @@ const slides = [
     objectPosition: "62% center",
   },
   {
+    id: "home-charge",
     image: "/images/hero-home-charge.png",
     alt: "White electric SUV charging outside a contemporary home",
     eyebrow: "Power, where you park",
-    icon: BatteryCharging,
     title: "Charge at home.",
     accent: "Wake ready.",
     description: "Reliable home charging turns every night into a full start. We’ll help you choose a setup that fits your car and routine.",
@@ -61,7 +62,13 @@ const slides = [
   },
 ];
 
-export function Hero() {
+const slideIcons = [Zap, Gauge, BatteryCharging];
+
+export function Hero({ slides: contentSlides }: { slides?: HeroSlideContent[] }) {
+  const slides = (contentSlides?.length ? contentSlides : defaultSlides).map((slide, index) => ({
+    ...slide,
+    icon: slideIcons[index % slideIcons.length],
+  }));
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 

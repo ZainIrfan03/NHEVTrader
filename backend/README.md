@@ -11,6 +11,7 @@ Payload CMS and Next.js backend for NH EV Trader. It runs independently from the
 - Orders with COD and online-payment states
 - Server-side checkout validation and price calculation
 - Banners, pages, homepage and site settings
+- Contact inquiries
 - Local media storage with automatic Cloudinary switching when credentials are provided
 - Payload REST and GraphQL APIs
 
@@ -20,6 +21,7 @@ Requirements: Node.js 20.18.1 or newer and MongoDB.
 
 ```bash
 npm install
+npm run seed
 npm run dev
 ```
 
@@ -32,6 +34,8 @@ Open:
 - GraphQL playground: http://localhost:3001/api/graphql-playground
 
 On the first `/admin` visit, create the first administrator account. For production, replace `PAYLOAD_SECRET`, use the MongoDB Atlas connection string and set the Cloudinary values in the deployment environment.
+
+`npm run seed` is idempotent and creates the development categories, products, media, homepage slider and site settings without duplicating existing records.
 
 ## Storefront checkout
 

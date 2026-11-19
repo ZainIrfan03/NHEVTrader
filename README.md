@@ -2,7 +2,12 @@
 
 The project is intentionally split into two independent applications:
 
-- `frontend/` — customer-facing Next.js storefront (current phase)
-- `backend/` — Payload CMS/API service (next phase)
+- `frontend/` — customer-facing Next.js storefront
+- `backend/` — Payload CMS, MongoDB and commerce API service
 
-See each application README for setup and architecture notes.
+The applications are connected through Payload REST endpoints. Run MongoDB and the backend on port `3001`, then run the frontend on port `3000`.
+
+Handover references:
+
+- `docs/ADMIN-GUIDE.md`
+- `docs/DEPLOYMENT.md`

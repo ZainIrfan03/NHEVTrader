@@ -10,6 +10,7 @@ import { Banners } from '@/collections/Banners'
 import { Categories } from '@/collections/Categories'
 import { Customers } from '@/collections/Customers'
 import { InventoryLogs } from '@/collections/InventoryLogs'
+import { Inquiries } from '@/collections/Inquiries'
 import { Media } from '@/collections/Media'
 import { Orders } from '@/collections/Orders'
 import { Pages } from '@/collections/Pages'
@@ -43,6 +44,7 @@ export default buildConfig({
     Media,
     Orders,
     InventoryLogs,
+    Inquiries,
     Banners,
     Pages,
   ],

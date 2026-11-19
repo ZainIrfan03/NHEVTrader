@@ -1,4 +1,5 @@
 const backendAPI = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const frontendURL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export async function POST(request: Request) {
   try {
@@ -8,6 +9,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        Origin: frontendURL,
         ...(request.headers.get("cookie") ? { Cookie: request.headers.get("cookie")! } : {}),
       },
       body: JSON.stringify(body),

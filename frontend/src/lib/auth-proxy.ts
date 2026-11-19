@@ -1,6 +1,7 @@
 import "server-only";
 
 const backendAPI = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const frontendURL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export type CustomerUser = {
   id: string;
@@ -29,6 +30,7 @@ export async function payloadRequest(
   headers.set("Accept", "application/json");
   if (options.body) headers.set("Content-Type", "application/json");
   if (options.cookie) headers.set("Cookie", options.cookie);
+  if (options.cookie) headers.set("Origin", frontendURL);
 
   const response = await fetch(`${backendAPI}${path}`, {
     ...options,
