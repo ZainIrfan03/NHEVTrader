@@ -21,6 +21,7 @@ The repository follows a separated frontend/backend architecture:
 - [Database seeding](#database-seeding)
 - [Running the project](#running-the-project)
 - [Storefront routes](#storefront-routes)
+- [AI shopping assistant](#ai-shopping-assistant)
 - [CMS and data model](#cms-and-data-model)
 - [Authentication and customer data](#authentication-and-customer-data)
 - [Cart, wishlist, and checkout behavior](#cart-wishlist-and-checkout-behavior)
@@ -54,6 +55,8 @@ The repository follows a separated frontend/backend architecture:
 - Contact form with custom JavaScript validation and CMS inquiry storage.
 - Custom loading, error, and 404 pages.
 - Responsive desktop and mobile navigation.
+- Floating AI shopping assistant with an animated greeting, quick questions, and responsive chat panel.
+- Natural English and Roman Urdu answers grounded in live CMS products, prices, specifications, stock, delivery settings, and support details.
 
 ### Administration panel
 
@@ -82,6 +85,7 @@ The repository follows a separated frontend/backend architecture:
 | Image processing | Sharp |
 | Authentication | Payload customer and staff authentication |
 | Payments | Cash on Delivery; online provider adapter pending |
+| AI assistant | Built-in catalog/FAQ fallback with optional OpenAI-compatible provider such as Gemini |
 
 ## Architecture
 
@@ -92,6 +96,7 @@ flowchart LR
     Staff[Store administrator] -->|Port 3001 /admin| Backend
     Backend --> MongoDB[(MongoDB)]
     Backend --> Media[Local media or Cloudinary]
+    Backend -->|Optional server-side request| AI[OpenAI-compatible AI provider]
 ```
 
 The storefront never calculates authoritative order totals or stock changes by itself. Checkout data is sent to the backend, where current products, variants, prices, stock, delivery charges, and customer authentication are verified before an order is created.
@@ -125,7 +130,7 @@ nhevtrader/
 │   ├── src/access/                # Payload access-control functions
 │   ├── src/app/                   # Payload/Next application routes
 │   ├── src/collections/           # CMS collections and authentication models
-│   ├── src/endpoints/             # Health, checkout, and cancellation endpoints
+│   ├── src/endpoints/             # Health, checkout, cancellation, and chatbot endpoints
 │   ├── src/globals/               # Homepage and site-wide settings
 │   ├── src/lib/                   # Cloudinary and backend utilities
 │   ├── src/payload.config.ts      # Payload CMS configuration
@@ -147,6 +152,7 @@ Install the following before running the project:
 - MongoDB Community Server locally, or a MongoDB Atlas connection string.
 - Git.
 - Optional Cloudinary account for cloud-hosted media.
+- Optional Gemini or another OpenAI-compatible API key for natural-language chatbot answers. The rule-based catalog and FAQ assistant works without one.
 - PowerShell commands below assume Windows; equivalent npm commands work on macOS and Linux.
 
 Check installed versions:
@@ -217,6 +223,9 @@ If MongoDB runs manually or through Atlas, make sure `DATABASE_URL` in `backend/
 | `PAYMENT_PROVIDER` | Yes | Currently `manual`; online checkout stays unavailable. |
 | `PAYMENT_SECRET_KEY` | Later | Future online payment provider secret. |
 | `PAYMENT_WEBHOOK_SECRET` | Later | Future verified payment webhook secret. |
+| `CHATBOT_API_URL` | No | OpenAI-compatible chat-completions endpoint. Leave empty to use the built-in fallback assistant. |
+| `CHATBOT_API_KEY` | No | Server-only AI provider key. Never expose or commit it. |
+| `CHATBOT_MODEL` | No | Provider model identifier used by the assistant. |
 
 Example:
 
@@ -234,6 +243,10 @@ CLOUDINARY_FOLDER=nh-ev-trader
 PAYMENT_PROVIDER=manual
 PAYMENT_SECRET_KEY=
 PAYMENT_WEBHOOK_SECRET=
+
+CHATBOT_API_URL=
+CHATBOT_API_KEY=
+CHATBOT_MODEL=
 ```
 
 ### Frontend: `frontend/.env.local`
@@ -269,7 +282,7 @@ The seed script creates or reuses:
 - Homepage featured products and copy.
 - Initial site settings, support contact values, and delivery charges.
 
-The seed is designed to skip existing categories, products, banners, and matching media where appropriate. It does not create an administrator password. Open `/admin` after the first backend start and use Payload's first-user screen to create the initial administrator.
+The seed is designed to skip existing categories, products, banners, and matching media where appropriate. It does not create an administrator password. Public administrator bootstrapping is disabled; provision the initial administrator through a trusted one-time setup process before opening the admin dashboard.
 
 ## Running the project
 
@@ -350,6 +363,30 @@ Frontend:
 | `/policies/[slug]` | Privacy, terms, and returns policies | Public |
 | `/sitemap.xml` | Search-engine sitemap | Public |
 | `/robots.txt` | Search crawler instructions | Public |
+
+## AI shopping assistant
+
+The storefront includes a floating chat launcher on every page. An animated “Hi! Can we chat?” prompt appears briefly after page load and disappears automatically. Opening the launcher shows a responsive chat panel with quick questions, conversation history, product links, live prices, and stock indicators.
+
+Request flow:
+
+1. The browser sends the message and the latest bounded conversation history to the same-origin `POST /api/chat` frontend proxy.
+2. The proxy forwards the request to `POST /api/storefront/chat` on the Payload backend.
+3. The backend validates and limits the input, loads active products and site settings from Payload, and builds a trusted catalog context.
+4. When all three `CHATBOT_*` variables are configured, the backend requests a natural-language answer from the configured OpenAI-compatible provider.
+5. If the provider is not configured or unavailable, verified catalog and FAQ rules still answer common questions about products, prices, stock, delivery, payments, returns, warranty, and support.
+
+The assistant supports English and Roman Urdu. AI output is instructed to use only supplied store facts and never invent prices, stock, policies, order status, discounts, or warranty coverage. Specific order information is not exposed through public chat; customers are directed to their authenticated account dashboard.
+
+Example Gemini-compatible local configuration:
+
+```dotenv
+CHATBOT_API_URL=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+CHATBOT_API_KEY=your-private-provider-key
+CHATBOT_MODEL=your-enabled-gemini-model
+```
+
+Restart the backend after changing these variables. API usage limits, privacy terms, and charges are controlled by the selected provider.
 
 ## CMS and data model
 
@@ -481,6 +518,9 @@ This is the project's basic technical SEO layer. Search Console setup, analytics
 - Secrets remain server-side and must never use `NEXT_PUBLIC_` prefixes.
 - Passwords and authentication are handled by Payload rather than custom plaintext storage.
 - Product stock cannot become negative through the checkout calculation.
+- Chat input is limited to 500 characters, recent history is bounded, and repeated requests are rate-limited.
+- AI credentials and provider calls remain on the backend; the frontend never receives the API key.
+- Chat safety instructions prohibit requesting passwords, OTPs, card numbers, or private order data.
 
 ## Testing and quality checks
 
@@ -521,8 +561,9 @@ Recommended manual checks:
 11. Cancel an eligible test order and confirm stock is restored.
 12. Add and edit a saved address.
 13. Submit the contact form and verify the inquiry in Payload.
-14. Check mobile layouts, sitemap, robots, 404, and error pages.
-15. Remove test customers, orders, inquiries, and inventory logs before launch when appropriate.
+14. Open the chat widget and verify greeting animation, fallback FAQs, product links, and a natural English or Roman Urdu AI response when configured.
+15. Check mobile layouts, sitemap, robots, 404, and error pages.
+16. Remove test customers, orders, inquiries, and inventory logs before launch when appropriate.
 
 ## Deployment
 
