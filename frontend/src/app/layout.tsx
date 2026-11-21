@@ -7,6 +7,7 @@ import { CatalogProvider } from "@/providers/CatalogProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { CartProvider } from "@/providers/CartProvider";
 import { WishlistProvider } from "@/providers/WishlistProvider";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <Header />
                 <main>{children}</main>
                 <Footer settings={siteSettings} />
+                <ChatWidget />
               </WishlistProvider>
             </CartProvider>
           </AuthProvider>

@@ -17,6 +17,7 @@ import { Pages } from '@/collections/Pages'
 import { Products } from '@/collections/Products'
 import { checkoutEndpoint } from '@/endpoints/checkout'
 import { cancelOrderEndpoint } from '@/endpoints/cancel-order'
+import { chatEndpoint } from '@/endpoints/chat'
 import { healthEndpoint } from '@/endpoints/health'
 import { Homepage } from '@/globals/Homepage'
 import { SiteSettings } from '@/globals/SiteSettings'
@@ -50,7 +51,7 @@ export default buildConfig({
     Pages,
   ],
   globals: [Homepage, SiteSettings],
-  endpoints: [healthEndpoint, checkoutEndpoint, cancelOrderEndpoint],
+  endpoints: [healthEndpoint, checkoutEndpoint, cancelOrderEndpoint, chatEndpoint],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'development-only-change-this-secret',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
