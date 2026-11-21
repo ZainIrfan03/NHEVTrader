@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { adminOnly, staffOnly } from '@/access'
+import { adminOnly, adminOrOwnStaffRecord, staffOnly } from '@/access'
 
 export const Admins: CollectionConfig = {
   slug: 'admins',
@@ -10,10 +10,10 @@ export const Admins: CollectionConfig = {
   },
   access: {
     admin: ({ req: { user } }) => user?.collection === 'admins',
-    create: ({ req: { user } }) => !user || (user.collection === 'admins' && user.role === 'admin'),
+    create: adminOnly,
     delete: adminOnly,
     read: staffOnly,
-    update: staffOnly,
+    update: adminOrOwnStaffRecord,
   },
   fields: [
     { name: 'name', type: 'text', required: true },

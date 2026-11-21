@@ -33,7 +33,7 @@ Open:
 - REST API: http://localhost:3001/api
 - GraphQL playground: http://localhost:3001/api/graphql-playground
 
-On the first `/admin` visit, create the first administrator account. For production, replace `PAYLOAD_SECRET`, use the MongoDB Atlas connection string and set the Cloudinary values in the deployment environment.
+Administrator creation is restricted to authenticated administrators. Create the initial administrator through a trusted one-time provisioning or seed process before opening the admin dashboard; public API requests cannot bootstrap an administrator. For production, replace `PAYLOAD_SECRET`, use the MongoDB Atlas connection string and set the Cloudinary values in the deployment environment.
 
 `npm run seed` is idempotent and creates the development categories, products, media, homepage slider and site settings without duplicating existing records.
 
